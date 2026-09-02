@@ -43,7 +43,6 @@ const userSchema = new Schema<IUserDocument>(
   }
 );
 
-userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ createdAt: -1 });
 
 export const UserModel = mongoose.model<IUserDocument>('User', userSchema);

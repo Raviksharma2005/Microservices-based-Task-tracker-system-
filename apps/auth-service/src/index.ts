@@ -5,7 +5,27 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 
 // Load env vars before anything else
-dotenv.config({ path: '../../.env' });
+import path from 'path';
+import fs from 'fs';
+
+// Find root .env file robustly
+function loadEnv() {
+  const possiblePaths = [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), '../../.env'),
+    path.resolve(__dirname, '../../../.env'),
+    path.resolve(__dirname, '../../../../.env'),
+    'E:/taskflow/.env',
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      dotenv.config({ path: p });
+      return;
+    }
+  }
+  dotenv.config();
+}
+loadEnv();
 
 import { connectDatabase, createLogger, errorHandler, notFoundHandler, rateLimiter } from '@taskflow/shared';
 import authRoutes from './routes/auth.routes';

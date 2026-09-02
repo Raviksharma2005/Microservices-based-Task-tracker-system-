@@ -3,10 +3,28 @@ import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';
 import dotenv from 'dotenv';
-import { createProxyMiddleware, Options } from 'http-proxy-middleware';
+import path from 'path';
+import fs from 'fs';
+import { createProxyMiddleware } from 'http-proxy-middleware';
 import pino from 'pino';
 
-dotenv.config({ path: '../../.env' });
+function loadEnv() {
+  const possiblePaths = [
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(process.cwd(), '../../.env'),
+    path.resolve(__dirname, '../../../.env'),
+    path.resolve(__dirname, '../../../../.env'),
+    'E:/taskflow/.env',
+  ];
+  for (const p of possiblePaths) {
+    if (fs.existsSync(p)) {
+      dotenv.config({ path: p });
+      return;
+    }
+  }
+  dotenv.config();
+}
+loadEnv();
 
 const logger = pino({
   name: 'api-gateway',
@@ -20,7 +38,6 @@ const logger = pino({
 const app = express();
 const PORT = process.env.GATEWAY_PORT || 3000;
 
-// â”€â”€â”€ Security â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use(helmet());
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:5173',
@@ -29,13 +46,11 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
-// â”€â”€â”€ Request logging â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.use((req, _res, next) => {
   logger.info({ method: req.method, path: req.path }, 'Incoming request');
   next();
 });
 
-// â”€â”€â”€ Health check â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.get('/health', (_req, res) => {
   res.json({
     status: 'healthy',
@@ -50,7 +65,6 @@ app.get('/health', (_req, res) => {
   });
 });
 
-// â”€â”€â”€ Service health aggregation â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.get('/api/health', async (_req, res) => {
   const services = [
     { name: 'auth', url: (process.env.AUTH_SERVICE_URL || 'http://localhost:3001') + '/health' },
@@ -84,78 +98,59 @@ app.get('/api/health', async (_req, res) => {
   });
 });
 
-// â”€â”€â”€ Proxy configuration â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-const proxyOptions = (target: string, pathRewrite: Record<string, string>): Options => ({
-  target,
-  changeOrigin: true,
-  pathRewrite,
-  on: {
-    proxyReq: (proxyReq, req) => {
-      logger.debug({ target, path: (req as any).originalUrl }, 'Proxying request');
-    },
-    error: (err, _req, res) => {
-      logger.error({ err, target }, 'Proxy error');
-      (res as any).status?.(502).json({
-        success: false,
-        error: 'Service temporarily unavailable',
-      });
-    },
-  },
-});
+// ─── Route Proxies ────────────────────────────────────
 
-// â”€â”€â”€ Route proxies â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 1. Auth Service
 app.use(
   '/api/auth',
-  createProxyMiddleware(
-    proxyOptions(
-      process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
-      { '^/api/auth': '/auth' }
-    )
-  )
+  createProxyMiddleware({
+    target: process.env.AUTH_SERVICE_URL || 'http://localhost:3001',
+    changeOrigin: true,
+    pathRewrite: (p) => '/auth' + p,
+  })
 );
 
+// 2. User Service
 app.use(
   '/api/users',
-  createProxyMiddleware(
-    proxyOptions(
-      process.env.USER_SERVICE_URL || 'http://localhost:3002',
-      { '^/api/users': '/users' }
-    )
-  )
+  createProxyMiddleware({
+    target: process.env.USER_SERVICE_URL || 'http://localhost:3002',
+    changeOrigin: true,
+    pathRewrite: (p) => '/users' + p,
+  })
 );
 
-app.use(
-  '/api/teams',
-  createProxyMiddleware(
-    proxyOptions(
-      process.env.TEAM_SERVICE_URL || 'http://localhost:3003',
-      { '^/api/teams': '/teams' }
-    )
-  )
-);
-
-app.use(
-  '/api/tasks',
-  createProxyMiddleware(
-    proxyOptions(
-      process.env.TASK_SERVICE_URL || 'http://localhost:3004',
-      { '^/api/tasks': '/tasks' }
-    )
-  )
-);
-
-// Team tasks route (proxied to task service)
+// 3. Task Service: Specific team tasks route /api/teams/:id/tasks (must be BEFORE general /api/teams)
 app.use(
   '/api/teams/:id/tasks',
-  createProxyMiddleware(
-    proxyOptions(
-      process.env.TASK_SERVICE_URL || 'http://localhost:3004',
-      { '^/api/teams': '/teams' }
-    )
-  )
+  createProxyMiddleware({
+    target: process.env.TASK_SERVICE_URL || 'http://localhost:3004',
+    changeOrigin: true,
+    pathRewrite: (_p, req: any) => '/teams' + (req.originalUrl ? req.originalUrl.replace('/api/teams', '') : _p),
+  })
 );
 
-// â”€â”€â”€ 404 fallback â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
+// 4. Team Service (general /api/teams/*)
+app.use(
+  '/api/teams',
+  createProxyMiddleware({
+    target: process.env.TEAM_SERVICE_URL || 'http://localhost:3003',
+    changeOrigin: true,
+    pathRewrite: (p) => '/teams' + p,
+  })
+);
+
+// 5. Task Service (general /api/tasks/*)
+app.use(
+  '/api/tasks',
+  createProxyMiddleware({
+    target: process.env.TASK_SERVICE_URL || 'http://localhost:3004',
+    changeOrigin: true,
+    pathRewrite: (p) => '/tasks' + p,
+  })
+);
+
+// ─── 404 fallback ─────────────────────────────────────
 app.use((_req, res) => {
   res.status(404).json({
     success: false,
@@ -163,14 +158,14 @@ app.use((_req, res) => {
   });
 });
 
-// â”€â”€â”€ Start â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 app.listen(PORT, () => {
   logger.info({ port: PORT }, 'API Gateway started');
   logger.info('Routes:');
-  logger.info('  /api/auth/*   -> Auth Service');
-  logger.info('  /api/users/*  -> User Service');
-  logger.info('  /api/teams/*  -> Team Service');
-  logger.info('  /api/tasks/*  -> Task Service');
+  logger.info('  /api/auth/*          -> Auth Service (:3001)');
+  logger.info('  /api/users/*         -> User Service (:3002)');
+  logger.info('  /api/teams/:id/tasks -> Task Service (:3004)');
+  logger.info('  /api/teams/*         -> Team Service (:3003)');
+  logger.info('  /api/tasks/*         -> Task Service (:3004)');
 });
 
 export default app;
