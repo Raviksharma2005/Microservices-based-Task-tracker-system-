@@ -1,4 +1,4 @@
-﻿import bcrypt from 'bcrypt';
+﻿import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { JwtPayload } from '@taskflow/shared';
 import { getRedisClient } from '@taskflow/shared';
