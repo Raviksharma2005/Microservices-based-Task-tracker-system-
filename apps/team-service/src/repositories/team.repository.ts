@@ -1,4 +1,4 @@
-﻿import { TeamModel, ITeamDocument } from '../models/team.model';
+import { TeamModel, ITeamDocument } from '../models/team.model';
 import { TeamMemberRole } from '@taskflow/shared';
 import { Types } from 'mongoose';
 

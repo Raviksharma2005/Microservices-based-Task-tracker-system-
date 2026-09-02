@@ -1,4 +1,4 @@
-﻿import 'express-async-errors';
+import 'express-async-errors';
 import express from 'express';
 import helmet from 'helmet';
 import cors from 'cors';

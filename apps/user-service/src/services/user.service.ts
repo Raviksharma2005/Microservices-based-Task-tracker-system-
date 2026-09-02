@@ -1,4 +1,4 @@
-﻿import { AppError, getCache, setCache, invalidateCache, createLogger } from '@taskflow/shared';
+import { AppError, getCache, setCache, invalidateCache, createLogger } from '@taskflow/shared';
 import { UserRepository } from '../repositories/user.repository';
 
 const logger = createLogger('user-service');

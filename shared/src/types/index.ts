@@ -1,4 +1,4 @@
-﻿import { Types } from 'mongoose';
+import { Types } from 'mongoose';
 
 // â”€â”€â”€ User Types â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 export interface IUser {

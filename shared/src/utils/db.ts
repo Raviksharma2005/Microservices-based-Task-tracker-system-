@@ -1,4 +1,4 @@
-﻿import mongoose from 'mongoose';
+import mongoose from 'mongoose';
 import { createLogger } from './logger';
 
 const logger = createLogger('mongodb');

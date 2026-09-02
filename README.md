@@ -1,4 +1,4 @@
-﻿# TaskFlow â€” Microservices Task & Team Management System
+# TaskFlow â€” Microservices Task & Team Management System
 
 A production-grade microservices backend with a React frontend for managing teams, users, and tasks.
 

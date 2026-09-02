@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { TeamController } from '../controllers/team.controller';
 import { authMiddleware, validate } from '@taskflow/shared';
 import {

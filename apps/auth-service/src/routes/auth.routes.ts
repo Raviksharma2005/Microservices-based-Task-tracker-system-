@@ -1,4 +1,4 @@
-﻿import { Router } from 'express';
+import { Router } from 'express';
 import { AuthController } from '../controllers/auth.controller';
 import { authMiddleware, validate } from '@taskflow/shared';
 import { registerSchema, loginSchema, refreshSchema } from '../validators/auth.validators';

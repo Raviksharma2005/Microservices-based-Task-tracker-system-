@@ -1,0 +1,148 @@
+version: '3.8'
+
+services:
+  # Optional local services (in case user wants to test without cloud)
+  mongo:
+    image: mongo:7
+    container_name: taskflow-mongo
+    restart: unless-stopped
+    ports:
+      - '27017:27017'
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - taskflow-network
+
+  redis:
+    image: redis:7-alpine
+    container_name: taskflow-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    volumes:
+      - redis_data:/data
+    networks:
+      - taskflow-network
+
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/auth-service/Dockerfile
+    container_name: taskflow-auth
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - AUTH_SERVICE_PORT=3001
+      - MONGODB_URI=${MONGODB_URI}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET:-taskflow-secret-key-production-change-me}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-taskflow-refresh-secret-production-change-me}
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+    ports:
+      - '3001:3001'
+    networks:
+      - taskflow-network
+
+  user-service:
+    build:
+      context: .
+      dockerfile: apps/user-service/Dockerfile
+    container_name: taskflow-user
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - USER_SERVICE_PORT=3002
+      - MONGODB_URI=${MONGODB_URI}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET:-taskflow-secret-key-production-change-me}
+    ports:
+      - '3002:3002'
+    networks:
+      - taskflow-network
+
+  team-service:
+    build:
+      context: .
+      dockerfile: apps/team-service/Dockerfile
+    container_name: taskflow-team
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - TEAM_SERVICE_PORT=3003
+      - MONGODB_URI=${MONGODB_URI}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET:-taskflow-secret-key-production-change-me}
+    ports:
+      - '3003:3003'
+    networks:
+      - taskflow-network
+
+  task-service:
+    build:
+      context: .
+      dockerfile: apps/task-service/Dockerfile
+    container_name: taskflow-task
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - TASK_SERVICE_PORT=3004
+      - MONGODB_URI=${MONGODB_URI}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+      - JWT_SECRET=${JWT_SECRET:-taskflow-secret-key-production-change-me}
+    ports:
+      - '3004:3004'
+    networks:
+      - taskflow-network
+
+  gateway:
+    build:
+      context: .
+      dockerfile: apps/gateway/Dockerfile
+    container_name: taskflow-gateway
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=production
+      - GATEWAY_PORT=3000
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - USER_SERVICE_URL=http://user-service:3002
+      - TEAM_SERVICE_URL=http://team-service:3003
+      - TASK_SERVICE_URL=http://task-service:3004
+      - FRONTEND_URL=${FRONTEND_URL:-http://localhost:5173}
+    ports:
+      - '3000:3000'
+    depends_on:
+      - auth-service
+      - user-service
+      - team-service
+      - task-service
+    networks:
+      - taskflow-network
+
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+    container_name: taskflow-frontend
+    restart: unless-stopped
+    ports:
+      - '80:80'
+    depends_on:
+      - gateway
+    networks:
+      - taskflow-network
+
+networks:
+  taskflow-network:
+    driver: bridge
+
+volumes:
+  mongo_data:
+  redis_data:

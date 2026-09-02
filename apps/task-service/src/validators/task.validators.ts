@@ -1,4 +1,4 @@
-﻿import { z } from 'zod';
+import { z } from 'zod';
 
 export const createTaskSchema = z.object({
   teamId: z.string().regex(/^[a-fA-F0-9]{24}$/, 'Invalid team ID format'),
