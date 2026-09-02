@@ -1,4 +1,4 @@
-﻿import { AppError, getCache, setCache, invalidateCache, createLogger, TeamMemberRole } from '@taskflow/shared';
+import { AppError, getCache, setCache, invalidateCache, createLogger, TeamMemberRole } from '@taskflow/shared';
 import { TeamRepository } from '../repositories/team.repository';
 
 const logger = createLogger('team-service');
@@ -19,11 +19,9 @@ export class TeamService {
   }
 
   async getTeam(teamId: string, userId: string) {
-    // Check cache
     const cacheKey = CACHE_PREFIX + teamId;
     const cached = await getCache<any>(cacheKey);
     if (cached) {
-      // Verify membership even for cached results
       const isMember = cached.members?.some((m: any) => m.userId.toString() === userId);
       if (!isMember) {
         throw new AppError('You are not a member of this team.', 403);
@@ -36,7 +34,6 @@ export class TeamService {
       throw new AppError('Team not found.', 404);
     }
 
-    // Check membership
     const isMember = team.members.some((m) => m.userId.toString() === userId);
     if (!isMember) {
       throw new AppError('You are not a member of this team.', 403);
@@ -75,12 +72,10 @@ export class TeamService {
   async addMember(teamId: string, requesterId: string, newMemberId: string, role: TeamMemberRole = 'MEMBER') {
     await this.requireRole(teamId, requesterId, ['OWNER', 'ADMIN']);
 
-    // Prevent adding OWNER role
     if (role === 'OWNER') {
       throw new AppError('Cannot assign OWNER role. Transfer ownership instead.', 400);
     }
 
-    // Check if already a member
     const isMember = await this.teamRepo.isMember(teamId, newMemberId);
     if (isMember) {
       throw new AppError('User is already a member of this team.', 409);
@@ -99,7 +94,6 @@ export class TeamService {
   async removeMember(teamId: string, requesterId: string, targetUserId: string) {
     await this.requireRole(teamId, requesterId, ['OWNER']);
 
-    // Prevent owner from removing themselves
     if (requesterId === targetUserId) {
       throw new AppError('Owner cannot remove themselves. Transfer ownership first.', 400);
     }
@@ -133,15 +127,13 @@ export class TeamService {
     return teams.map((t) => t.toJSON());
   }
 
-  // â”€â”€â”€ Private helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
   private async requireRole(teamId: string, userId: string, allowedRoles: TeamMemberRole[]) {
     const role = await this.teamRepo.getMemberRole(teamId, userId);
     if (!role) {
       throw new AppError('You are not a member of this team.', 403);
     }
     if (!allowedRoles.includes(role)) {
-      throw new AppError(This action requires one of:  role., 403);
+      throw new AppError(`This action requires one of: ${allowedRoles.join(', ')} role.`, 403);
     }
   }
 }

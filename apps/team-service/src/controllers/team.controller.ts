@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { TeamService } from '../services/team.service';
 
 const teamService = new TeamService();
@@ -19,7 +19,7 @@ export class TeamController {
 
   async getById(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const team = await teamService.getTeam(id, userId);
 
@@ -31,7 +31,7 @@ export class TeamController {
 
   async update(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const team = await teamService.updateTeam(id, userId, req.body);
 
@@ -44,7 +44,7 @@ export class TeamController {
 
   async delete(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     await teamService.deleteTeam(id, userId);
 
@@ -56,7 +56,7 @@ export class TeamController {
 
   async addMember(req: Request, res: Response): Promise<void> {
     const requesterId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const { userId, role } = req.body;
 
     const team = await teamService.addMember(id, requesterId, userId, role);
@@ -70,7 +70,8 @@ export class TeamController {
 
   async removeMember(req: Request, res: Response): Promise<void> {
     const requesterId = req.user!.userId;
-    const { id, userId } = req.params;
+    const id = req.params.id as string;
+    const userId = req.params.userId as string;
 
     const team = await teamService.removeMember(id, requesterId, userId);
 
@@ -83,7 +84,7 @@ export class TeamController {
 
   async getMembers(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const members = await teamService.getMembers(id, userId);
 

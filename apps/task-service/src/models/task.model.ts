@@ -1,4 +1,4 @@
-﻿import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 import { ITask } from '@taskflow/shared';
 
 export interface ITaskDocument extends Omit<ITask, '_id'>, Document {}
@@ -43,7 +43,7 @@ const taskSchema = new Schema<ITaskDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret) {
+      transform(_doc, ret: any) {
         delete ret.__v;
         return ret;
       },
@@ -51,7 +51,6 @@ const taskSchema = new Schema<ITaskDocument>(
   }
 );
 
-// Compound indexes for common queries
 taskSchema.index({ teamId: 1, status: 1 });
 taskSchema.index({ teamId: 1, assigneeId: 1 });
 taskSchema.index({ teamId: 1, createdAt: -1 });

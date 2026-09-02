@@ -1,4 +1,4 @@
-﻿import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { createLogger } from '../utils/logger';
 
 const logger = createLogger('error-handler');
@@ -54,7 +54,7 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
     return;
   }
 
-  // Unexpected errors â€” never leak stack trace in production
+  // Unexpected errors — never leak stack trace in production
   logger.error(
     {
       err,
@@ -77,6 +77,6 @@ export function errorHandler(err: Error, req: Request, res: Response, _next: Nex
 export function notFoundHandler(req: Request, res: Response): void {
   res.status(404).json({
     success: false,
-    error: Route {req.method} {req.originalUrl} not found,
+    error: `Route ${req.method} ${req.originalUrl} not found`,
   });
 }

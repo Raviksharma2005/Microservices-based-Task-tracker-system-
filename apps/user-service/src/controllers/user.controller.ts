@@ -1,11 +1,11 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { UserService } from '../services/user.service';
 
 const userService = new UserService();
 
 export class UserController {
   async getUser(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const user = await userService.getUserById(id);
 
     res.status(200).json({
@@ -15,7 +15,7 @@ export class UserController {
   }
 
   async updateUser(req: Request, res: Response): Promise<void> {
-    const { id } = req.params;
+    const id = req.params.id as string;
     const userId = req.user!.userId;
     const updates = req.body;
 

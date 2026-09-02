@@ -1,4 +1,4 @@
-﻿import { Request, Response, NextFunction } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import { getRedisClient } from '../utils/redis';
 import { createLogger } from '../utils/logger';
 
@@ -18,7 +18,7 @@ export function rateLimiter(config?: Partial<RateLimitConfig>) {
     try {
       const redis = getRedisClient();
       const identifier = req.user?.userId || req.ip || 'anonymous';
-      const key = atelimit:{identifier};
+      const key = `ratelimit:${identifier}`;
 
       const current = await redis.incr(key);
 
@@ -45,7 +45,7 @@ export function rateLimiter(config?: Partial<RateLimitConfig>) {
       next();
     } catch (err) {
       // If Redis is down, allow the request through (fail-open)
-      logger.error({ err }, 'Rate limiter error â€” allowing request');
+      logger.error({ err }, 'Rate limiter error — allowing request');
       next();
     }
   };

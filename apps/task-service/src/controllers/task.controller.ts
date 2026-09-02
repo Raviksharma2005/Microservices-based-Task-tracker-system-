@@ -1,4 +1,4 @@
-﻿import { Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { TaskService } from '../services/task.service';
 
 const taskService = new TaskService();
@@ -17,7 +17,7 @@ export class TaskController {
 
   async getById(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const task = await taskService.getTask(id, userId);
 
@@ -29,7 +29,7 @@ export class TaskController {
 
   async update(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     const task = await taskService.updateTask(id, userId, req.body);
 
@@ -42,7 +42,7 @@ export class TaskController {
 
   async delete(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
 
     await taskService.deleteTask(id, userId);
 
@@ -54,7 +54,7 @@ export class TaskController {
 
   async getTeamTasks(req: Request, res: Response): Promise<void> {
     const userId = req.user!.userId;
-    const { id } = req.params;
+    const id = req.params.id as string;
     const page = parseInt(req.query.page as string) || 1;
     const limit = parseInt(req.query.limit as string) || 20;
     const status = req.query.status as string | undefined;

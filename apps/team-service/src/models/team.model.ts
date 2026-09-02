@@ -1,5 +1,5 @@
-﻿import mongoose, { Schema, Document, Types } from 'mongoose';
-import { ITeam, TeamMemberRole } from '@taskflow/shared';
+import mongoose, { Schema, Document } from 'mongoose';
+import { ITeam } from '@taskflow/shared';
 
 export interface ITeamDocument extends Omit<ITeam, '_id'>, Document {}
 
@@ -47,7 +47,7 @@ const teamSchema = new Schema<ITeamDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret) {
+      transform(_doc, ret: any) {
         delete ret.__v;
         return ret;
       },
@@ -55,7 +55,6 @@ const teamSchema = new Schema<ITeamDocument>(
   }
 );
 
-// Indexes
 teamSchema.index({ 'members.userId': 1 });
 teamSchema.index({ name: 'text' });
 teamSchema.index({ createdAt: -1 });

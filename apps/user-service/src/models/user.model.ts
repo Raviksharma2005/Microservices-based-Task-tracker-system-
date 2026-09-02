@@ -1,4 +1,4 @@
-﻿import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '@taskflow/shared';
 
 export interface IUserDocument extends Omit<IUser, '_id'>, Document {}
@@ -32,7 +32,7 @@ const userSchema = new Schema<IUserDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret) {
+      transform(_doc, ret: any) {
         delete ret.passwordHash;
         delete ret.__v;
         return ret;

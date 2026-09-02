@@ -1,4 +1,4 @@
-﻿import mongoose, { Schema, Document } from 'mongoose';
+import mongoose, { Schema, Document } from 'mongoose';
 import { IUser } from '@taskflow/shared';
 
 export interface IUserDocument extends Omit<IUser, '_id'>, Document {}
@@ -16,7 +16,7 @@ const userSchema = new Schema<IUserDocument>(
     passwordHash: {
       type: String,
       required: [true, 'Password is required'],
-      select: false, // Never return password by default
+      select: false,
     },
     name: {
       type: String,
@@ -34,7 +34,7 @@ const userSchema = new Schema<IUserDocument>(
   {
     timestamps: true,
     toJSON: {
-      transform(_doc, ret) {
+      transform(_doc, ret: any) {
         delete ret.passwordHash;
         delete ret.__v;
         return ret;
@@ -43,7 +43,6 @@ const userSchema = new Schema<IUserDocument>(
   }
 );
 
-// Index for faster lookups
 userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ createdAt: -1 });
 
