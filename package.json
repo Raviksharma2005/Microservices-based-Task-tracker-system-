@@ -1,0 +1,29 @@
+﻿{
+  "name": "taskflow",
+  "version": "1.0.0",
+  "description": "Microservices Task & Team Management System",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "apps/*"
+  ],
+  "scripts": {
+    "dev:auth": "cd apps/auth-service && npm run dev",
+    "dev:user": "cd apps/user-service && npm run dev",
+    "dev:team": "cd apps/team-service && npm run dev",
+    "dev:task": "cd apps/task-service && npm run dev",
+    "dev:gateway": "cd apps/gateway && npm run dev",
+    "dev:frontend": "cd apps/frontend && npm run dev",
+    "dev:services": "concurrently \"npm run dev:auth\" \"npm run dev:user\" \"npm run dev:team\" \"npm run dev:task\" \"npm run dev:gateway\"",
+    "build:all": "npm run build --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "lint": "eslint . --ext .ts,.tsx"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.0",
+    "typescript": "^5.7.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
